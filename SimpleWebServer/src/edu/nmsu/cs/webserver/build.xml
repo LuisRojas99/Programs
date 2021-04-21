@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default = "run" name= "Luis Rojas Project1">
+	<target name="run" depends = "compile">
+		<java classname = "edu.nmsu.cs.webserver">
+			<classpath path="staging"/>
+		</java>
+	</target>
+	
+	<target name="compile">
+	<javac includeantruntime="false" srcdir="C:\Users\gorel\Desktop\SchoolWork\Programs\SimpleWebServer\src" destdir="staging" />
+	
+	
+	
+	</target>
+	
+</project>
+
+
+

@@ -42,6 +42,8 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import javax.swing.text.html.HTML.Tag;
+
 public class WebWorker implements Runnable
 {
 
@@ -67,27 +69,45 @@ public class WebWorker implements Runnable
 		{
 			InputStream is = socket.getInputStream();
 			OutputStream os = socket.getOutputStream();
-			readHTTPRequest(is);
-			writeHTTPHeader(os, "text/html");
-			writeContent(os);
+			
+			String s =readHTTPRequest(is);                    //Here I read the request
+			if(s!="Not Found") {                              // If the request does not send back "not found"
+				writeHTTPHeader(os, "text/html");             // then procede as usual
+				writeContent(os);
+				os.flush();
+			}
+			else {                                           // if it was not found then pass the "not found" string as content type
+			writeHTTPHeader(os, s);                          // to write http header
+			writeContent2(os);                               // and go to write content 2 where I have the text of "Error 404, not found"
 			os.flush();
+			}
+			    
 			socket.close();
 		}
 		catch (Exception e)
 		{
 			System.err.println("Output error: " + e);
 		}
+		
 		System.err.println("Done handling connection.");
 		return;
 	}
 
 	/**
 	 * Read the HTTP request header.
+	 * I turned from void to String return, 
+	 * if the URL is not the same exact as the one I wanted, return string "not found"
+	 * if it was the same then return the string return the string.
+	 * 
+	 * 
 	 **/
-	private void readHTTPRequest(InputStream is)
+	private String readHTTPRequest(InputStream is) 
 	{
-		String line;
+		String line="";
+		String ret;
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));
+		//System.out.println("InputStream is : "+ is.toString());
+		
 		while (true)
 		{
 			try
@@ -95,9 +115,21 @@ public class WebWorker implements Runnable
 				while (!r.ready())
 					Thread.sleep(1);
 				line = r.readLine();
+				if(line.contains("GET")&& !line.matches(   "GET /res/acc/test.html HTTP/1.1")) {
+					System.out.println("404 not found  ***********\n");
+					System.out.println("Line was : "+line);
+					ret = "Not Found";
+					return ret;
+				}
+				else if(line.contains("GET")&& line.matches(   "GET /res/acc/test.html HTTP/1.1")) {
+					ret = line;
+					
+					
+				}
 				System.err.println("Request line: (" + line + ")");
 				if (line.length() == 0)
 					break;
+				
 			}
 			catch (Exception e)
 			{
@@ -105,7 +137,7 @@ public class WebWorker implements Runnable
 				break;
 			}
 		}
-		return;
+		return line;
 	}
 
 	/**
@@ -120,8 +152,10 @@ public class WebWorker implements Runnable
 	{
 		Date d = new Date();
 		DateFormat df = DateFormat.getDateTimeInstance();
+		
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		os.write("HTTP/1.1 200 OK\n".getBytes());
+		if(contentType != "Not Found") {                 // If the content type is not "Not Found" which it means it was found
+		os.write("HTTP/1.1 200 OK\\n".getBytes());       // then it is a 200 status code 
 		os.write("Date: ".getBytes());
 		os.write((df.format(d)).getBytes());
 		os.write("\n".getBytes());
@@ -130,12 +164,38 @@ public class WebWorker implements Runnable
 		// os.write("Content-Length: 438\n".getBytes());
 		os.write("Connection: close\n".getBytes());
 		os.write("Content-Type: ".getBytes());
+		
 		os.write(contentType.getBytes());
 		os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
 		return;
+		}
+		else {                                            // If it was not found then it is a status code 404.
+			os.write("HTTP/1.1 404 Not Found\\n".getBytes());
+			os.write("Date: ".getBytes());
+			os.write((df.format(d)).getBytes());
+			os.write("\n".getBytes());
+			os.write("Server: Jon's very own server\n".getBytes());
+			// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
+			// os.write("Content-Length: 438\n".getBytes());
+			os.write("Connection: close\n".getBytes());
+			os.write("Content-Type: ".getBytes());
+			
+			os.write(contentType.getBytes());
+			os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+			return;	
+		}
 	}
 
 	/**
+	 * cd C:\Users\gorel\Desktop\SchoolWork\Programs\SimpleWebServer\src
+	 * 
+	 * javac edu/nmsu/cs/webserver/*.java -d ../bin
+	 * 
+	 * cd C:\Users\gorel\Desktop\SchoolWork\Programs\SimpleWebServer
+	 * 
+	 * java -cp bin edu.nmsu.cs.webserver.WebServer
+	 * 
+	 * 
 	 * Write the data content to the client network connection. This MUST be done after the HTTP
 	 * header has been written out.
 	 * 
@@ -144,8 +204,23 @@ public class WebWorker implements Runnable
 	 **/
 	private void writeContent(OutputStream os) throws Exception
 	{
+		
+		Date d = new Date();
+		DateFormat df = DateFormat.getDateTimeInstance();
+		
+		df.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
 		os.write("<html><head></head><body>\n".getBytes());
-		os.write("<h3>My web server works!</h3>\n".getBytes());
+		
+		os.write("<p>hello world, the current date is :  <cs371date> . The server is <cs371server>.</p>".getBytes());
+		os.write("</body></html>\n".getBytes());
+	}
+	private void writeContent2(OutputStream os) throws Exception
+	{
+		
+		
+		os.write("<html><head></head><body>\n".getBytes());
+		os.write("<h3>Error 404, Page Not Found!</h3>\n".getBytes());
 		os.write("</body></html>\n".getBytes());
 	}
 
