@@ -34,11 +34,16 @@ package edu.nmsu.cs.webserver;
  **/
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.text.DateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -48,7 +53,9 @@ public class WebWorker implements Runnable
 {
 
 	private Socket socket;
-
+    private String server="Luis's Kawaii Server :3";//name of the server
+    private File page;// page/file being served
+    
 	/**
 	 * Constructor: must have a valid open socket
 	 **/
@@ -69,28 +76,20 @@ public class WebWorker implements Runnable
 		{
 			InputStream is = socket.getInputStream();
 			OutputStream os = socket.getOutputStream();
-			
-			String s =readHTTPRequest(is);                    //Here I read the request
-			if(s!="Not Found") {                              // If the request does not send back "not found"
-				writeHTTPHeader(os, "text/html");             // then procede as usual
-				writeContent(os);
-				os.flush();
-			}
-			else {                                           // if it was not found then pass the "not found" string as content type
-			writeHTTPHeader(os, s);                          // to write http header
-			writeContent2(os);                               // and go to write content 2 where I have the text of "Error 404, not found"
+			readHTTPRequest(is);
+			writeHTTPHeader(os, "text/html");
+			writeContent(os);
 			os.flush();
-			}
-			    
 			socket.close();
 		}
 		catch (Exception e)
 		{
 			System.err.println("Output error: " + e);
+		    
 		}
-		
 		System.err.println("Done handling connection.");
 		return;
+	
 	}
 
 	/**
@@ -101,44 +100,51 @@ public class WebWorker implements Runnable
 	 * 
 	 * 
 	 **/
-	private String readHTTPRequest(InputStream is) 
+	private void readHTTPRequest(InputStream is) 
 	{
-		String line="";
-		String ret;
+		String line;
+		
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));
-		//System.out.println("InputStream is : "+ is.toString());
+		//System.out.println("InputStream is : "+ is.toString()); this was me trying to debug manualy lol.
 		
 		while (true)
 		{
 			try
 			{
-				while (!r.ready())
+				while (!r.ready()) {
 					Thread.sleep(1);
+				}
 				line = r.readLine();
-				if(line.contains("GET")&& !line.matches(   "GET /res/acc/test.html HTTP/1.1")) {
-					System.out.println("404 not found  ***********\n");
-					System.out.println("Line was : "+line);
-					ret = "Not Found";
-					return ret;
-				}
-				else if(line.contains("GET")&& line.matches(   "GET /res/acc/test.html HTTP/1.1")) {
-					ret = line;
-					
-					
-				}
-				System.err.println("Request line: (" + line + ")");
-				if (line.length() == 0)
+				System.err.println("Request Line: ("+line+")");
+				if(line.length()==0) {      // if line doesn't have anything break the whileloop there is no point on going foreward.
 					break;
+					
+				}
+				if(line.substring(0, 3).equals("GET")) {        //if the substring of line from index 0 to 3 is equal to "GET" then split the line from the blankspace on... 
+		               
+					   String[] splitLine = line.split(" ");
+					   String path = "." + splitLine[1]; //makes path start with a . then add the line splitted from the blankspace
+		               //System.out.println(path);// debug to know what is the path is taking
+		               
+		               if (path.equals("./")) {
+		                  
+		            	  System.out.println("Success!");
+		                  path = "./text.html"; //this is the type of files that needs to be served
+		               }
+		               page = new File(path);
+				}//end of if
+		    }
+				 
 				
-			}
+			
 			catch (Exception e)
 			{
 				System.err.println("Request error: " + e);
-				break;
-			}
-		}
-		return line;
-	}
+				break;//if it has an exception then break the loop
+			}//end catch error
+		}//end of whileloop
+		return;
+	}//end readhttp
 
 	/**
 	 * Write the HTTP header lines to the client network connection.
@@ -154,36 +160,26 @@ public class WebWorker implements Runnable
 		DateFormat df = DateFormat.getDateTimeInstance();
 		
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		if(contentType != "Not Found") {                 // If the content type is not "Not Found" which it means it was found
-		os.write("HTTP/1.1 200 OK\\n".getBytes());       // then it is a 200 status code 
-		os.write("Date: ".getBytes());
-		os.write((df.format(d)).getBytes());
+		if(page.exists()) {// if the page exists (file is in the servers directory)
+			os.write("HTTP/1.1 200 OK\n".getBytes());//status message should be 200
+			
+		}
+		else{
+			os.write("HTTP/1.1 404 Not Found\n".getBytes());// else then return not found 404 status message
+			
+		}
+		os.write("Date is : ".getBytes());
+		os.write(df.format(d).getBytes());
 		os.write("\n".getBytes());
-		os.write("Server: Jon's very own server\n".getBytes());
-		// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
-		// os.write("Content-Length: 438\n".getBytes());
+		os.write("Server : Luis's own Server\n".getBytes());
 		os.write("Connection: close\n".getBytes());
 		os.write("Content-Type: ".getBytes());
-		
 		os.write(contentType.getBytes());
-		os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+		os.write("\n\n".getBytes());
+		
 		return;
-		}
-		else {                                            // If it was not found then it is a status code 404.
-			os.write("HTTP/1.1 404 Not Found\\n".getBytes());
-			os.write("Date: ".getBytes());
-			os.write((df.format(d)).getBytes());
-			os.write("\n".getBytes());
-			os.write("Server: Jon's very own server\n".getBytes());
-			// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
-			// os.write("Content-Length: 438\n".getBytes());
-			os.write("Connection: close\n".getBytes());
-			os.write("Content-Type: ".getBytes());
-			
-			os.write(contentType.getBytes());
-			os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
-			return;	
-		}
+		
+		
 	}
 
 	/**
@@ -204,24 +200,27 @@ public class WebWorker implements Runnable
 	 **/
 	private void writeContent(OutputStream os) throws Exception
 	{
+		if(page.exists()) {// if the page exists then continue with the process
+			BufferedReader reader = new BufferedReader(new FileReader(page));//makes a reader for the page being served
+			String string; //string is the line readed.
+			Date d = new Date();
+			DateFormat df =DateFormat.getDateTimeInstance();
+			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+			while(reader.readLine()!=null) {//if the line readed is not empty, proceed to do whileloop when it becomes null break the while loop
+				
+				string=reader.readLine();   // set string to the line readed above.
+				string= string.replaceAll("<cs371date>",df.format(d));// replacing tags
+				string= string.replaceAll("<cs371server>",server);    // replacing tags
+			
+			}//end while loop
+		}//end if
+		else { //if the page/file does not exist in directory, throw message 404 not found (this is what is seen at the web page, not the status message).
+			
+			os.write("<html><head></head>".getBytes());
+			os.write("<body><h2>Error 404 Page Status: Not Found :(".getBytes());
+			return;
+		}//end else
 		
-		Date d = new Date();
-		DateFormat df = DateFormat.getDateTimeInstance();
-		
-		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		
-		os.write("<html><head></head><body>\n".getBytes());
-		
-		os.write("<p>hello world, the current date is :  <cs371date> . The server is <cs371server>.</p>".getBytes());
-		os.write("</body></html>\n".getBytes());
-	}
-	private void writeContent2(OutputStream os) throws Exception
-	{
-		
-		
-		os.write("<html><head></head><body>\n".getBytes());
-		os.write("<h3>Error 404, Page Not Found!</h3>\n".getBytes());
-		os.write("</body></html>\n".getBytes());
-	}
+	}//end write content
 
 } // end class
