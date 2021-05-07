@@ -116,20 +116,22 @@ public class WebWorker implements Runnable
 				}
 				line = r.readLine();
 				System.err.println("Request Line: ("+line+")");
+				
 				if(line.length()==0) {      // if line doesn't have anything break the whileloop there is no point on going foreward.
 					break;
 					
 				}
 				if(line.substring(0, 3).equals("GET")) {        //if the substring of line from index 0 to 3 is equal to "GET" then split the line from the blankspace on... 
 		               
-					   String[] splitLine = line.split(" ");
-					   String path = "." + splitLine[1]; //makes path start with a . then add the line splitted from the blankspace
-		               //System.out.println(path);// debug to know what is the path is taking
+					   String[] splitLine = line.split(" ");// after GET we have a space, so make splitline = to the substring from the index of blank space to end.
+					   String path = "."+ splitLine[1]; //makes path start   then add the line splitted from the blankspace
+					   //
+					   System.out.println("This is path :"+path);// debug to know what is the path is taking
 		               
 		               if (path.equals("./")) {
 		                  
 		            	  System.out.println("Success!");
-		                  path = "./text.html"; //this is the type of files that needs to be served
+		                  path = "./text.html"; 
 		               }
 		               page = new File(path);
 				}//end of if
@@ -160,6 +162,8 @@ public class WebWorker implements Runnable
 		DateFormat df = DateFormat.getDateTimeInstance();
 		
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
+		System.out.println("this is page :"+page);
+		System.out.println("This page exist :"+page.exists());
 		if(page.exists()) {// if the page exists (file is in the servers directory)
 			os.write("HTTP/1.1 200 OK\n".getBytes());//status message should be 200
 			
@@ -209,9 +213,14 @@ public class WebWorker implements Runnable
 			while(reader.readLine()!=null) {//if the line readed is not empty, proceed to do whileloop when it becomes null break the while loop
 				
 				string=reader.readLine();   // set string to the line readed above.
-				string= string.replaceAll("<cs371date>",df.format(d));// replacing tags
-				string= string.replaceAll("<cs371server>",server);    // replacing tags
-			
+				
+				//string= string.replaceAll("<cs371date>",df.format(d));// replacing tags
+				//string= string.replaceAll("<cs371server>",server);    // replacing tags
+			    os.write("<html><head></head>".getBytes());
+			    os.write(string.replaceAll("<cs371date>", df.format(d).toString()).getBytes());
+			    //os.write("<body><h2>The server is : <cs371server></h2></body>".getBytes());
+			    os.write("</html>".getBytes());
+			    
 			}//end while loop
 		}//end if
 		else { //if the page/file does not exist in directory, throw message 404 not found (this is what is seen at the web page, not the status message).
