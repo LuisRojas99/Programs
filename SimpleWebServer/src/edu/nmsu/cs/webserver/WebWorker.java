@@ -126,11 +126,10 @@ public class WebWorker implements Runnable
 					   String[] splitLine = line.split(" ");// after GET we have a space, so make splitline = to the substring from the index of blank space to end.
 					   String path = "."+ splitLine[1]; //makes path start   then add the line splitted from the blankspace
 					   //
-					   System.out.println("This is path :"+path);// debug to know what is the path is taking
+					   //System.out.println("This is path :"+path);// debug to know what is the path is taking
 		               
-		               if (path.equals("./")) {
-		                  
-		            	  System.out.println("Success!");
+		               if (path.equals("./")) {		                  
+		            	 //System.out.println("path completed:3");
 		                  path = "./text.html"; 
 		               }
 		               page = new File(path);
@@ -222,6 +221,7 @@ public class WebWorker implements Runnable
 			    os.write("</html>".getBytes());
 			    
 			}//end while loop
+		
 		}//end if
 		else { //if the page/file does not exist in directory, throw message 404 not found (this is what is seen at the web page, not the status message).
 			

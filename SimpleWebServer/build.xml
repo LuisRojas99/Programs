@@ -1,0 +1,19 @@
+<project default ="Compile">
+	<target name="clean">
+		<delete dir = "build"/>
+			
+	</target>
+	<target name="Compile" depends = "compile,clean">
+	</target>
+		<target name="compile">
+			<mkdir dir = "build/classes"/>
+			<javac srcdir="src" destdir="build/classes"/>
+		</target>
+			
+			<target name= "run">
+			<java classname="edu.nmsu.cs.webserver.WebSerber" classpath=".build/classes" fork="true"/>
+				
+				
+			</target>
+</project>
+			
