@@ -214,10 +214,10 @@ public class WebWorker implements Runnable
 				
 				string=reader.readLine();   // set string to the line readed above.
 				
-				//string= string.replaceAll("<cs371date>",df.format(d));// replacing tags
-				//string= string.replaceAll("<cs371server>",server);    // replacing tags
+				string= string.replaceAll("<cs371date>",df.format(d).toString());// replacing tags
+				string= string.replaceAll("<cs371server>",server);    // replacing tags
 			    os.write("<html><head></head>".getBytes());
-			    os.write(string.replaceAll("<cs371date>", df.format(d).toString()).getBytes());
+			    os.write(string.getBytes());
 			    //os.write("<body><h2>The server is : <cs371server></h2></body>".getBytes());
 			    os.write("</html>".getBytes());
 			    
