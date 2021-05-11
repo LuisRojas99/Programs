@@ -1,19 +1,26 @@
-<project default ="Compile">
-	<target name="clean">
-		<delete dir = "build"/>
-			
-	</target>
-	<target name="Compile" depends = "compile,clean">
-	</target>
-		<target name="compile">
-			<mkdir dir = "build/classes"/>
-			<javac srcdir="src" destdir="build/classes"/>
-		</target>
-			
-			<target name= "run">
-			<java classname="edu.nmsu.cs.webserver.WebSerber" classpath=".build/classes" fork="true"/>
-				
-				
-			</target>
-</project>
+<project name="SimpleWebServer" default="cleanbuild" basedir=".">
+    <description>
+        Buildfile for the SimpleWebServer.
+    </description>
+    <property name="src" location="src/" />
+    <property name="build" location="bin/" />
+
+    <target name="clean" description="delete class files">
+        <delete dir="${build}"/>
+    </target>
+
+    <target name="build" description="compiles java files to /bin">
+        <mkdir dir="${build}"/>
+        <javac srcdir="${src}" destdir="${build}"/>
+    </target>
+
+    <target name="cleanbuild" depends="clean,build"/>
+
+    <target name="run" description="launches SimpleWebServer on port 8080">
+        <java classname="edu.nmsu.cs.webserver.WebServer" classpath="${build}" fork="true" >
+            <arg value="8080"/>
+        </java>
+
+    </target>
+</project> 
 			
